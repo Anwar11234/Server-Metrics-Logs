@@ -8,10 +8,7 @@ def create_spark_session(app_name = "KafkaLogAnalysis"):
         .config("spark.sql.legacy.timeParserPolicy", "LEGACY") \
         .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0") \
         .getOrCreate()
-    
-    spark.conf.set("spark.hadoop.fs.defaultFS", "hdfs://hdfs-namenode:8020")
-    spark.conf.set("spark.hadoop.dfs.client.use.datanode.hostname", "false")
-    
+        
     return spark
 
 def read_kafka_stream(spark, bootstrap_servers, topic, starting_offsets = "earliest"):
