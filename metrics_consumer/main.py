@@ -1,6 +1,6 @@
 from kafka import KafkaConsumer
-from database_config import Session
 from schema import SystemMetrics
+from database_config import Session
 import logging
 
 def parse_message(message_value):
@@ -36,7 +36,7 @@ def main():
     )
 
     consumer = KafkaConsumer(
-                'test-topic4',
+                'metrics',
                 auto_offset_reset='earliest',
                 group_id='metrics-group',
                 bootstrap_servers=['localhost:9092','localhost:9093','localhost:9094']
@@ -45,7 +45,6 @@ def main():
     for message in consumer:    
         try:
             metrics_data = parse_message(message.value)
-            print(message.partition)
             write_to_database(metrics_data)
         except Exception as e:
             logging.error(f"Error processing message: {e}")

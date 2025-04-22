@@ -43,9 +43,7 @@ A distributed monitoring system for tracking server metrics and load balancer lo
 
 Start all required services:
 ```bash
-docker-compose -f docker-compose.kafka.yml \
-               -f docker-compose.postgres.yml \
-               -f docker-compose.hdfs.yml up -d
+docker-compose up -d
 ```
 
 ### 2. Kafka Topics Configuration
@@ -59,22 +57,22 @@ docker exec -it kafka1 bash
 
 2. Create topics:
 ```bash
-kafka-topics --bootstrap-server localhost:9092 \
+kafka-topics --bootstrap-server localhost:19092 \
              --create \
-             --topic test-topic3 \
+             --topic logs \
              --partitions 2 \
              --replication-factor 3 \
              --config retention.ms=86400000
 
-kafka-topics --bootstrap-server localhost:9092 \
+kafka-topics --bootstrap-server localhost:19092 \
              --create \
-             --topic test-topic4 \
+             --topic metrics \
              --partitions 3 \
              --replication-factor 3 \
              --config retention.ms=86400000
 ```
 
-> **Note**: Complete topic configurations are available in `Brokers & Topics Configuration.pdf`
+> **Note**: Complete topic configurations are available in `Brokers & Topics Configuration.md`
 
 ## Running the System
 
@@ -98,12 +96,22 @@ python main.py
 
 ### 3. Deploy Logs Consumer (Spark/HDFS)
 
+Open a bash terminal inside the NameNode container then, create a new user called spark (the username for the spark app) and give it access to write to HDFS:
+```bash
+docker exec -it NameNode bash
+hdfs dfs -mkdir /user
+hdfs dfs -mkdir /user/spark
+hdfs dfs -chown spark:spark /user/spark
+hdfs dfs -chmod 755 /user/spark
+```
+
 Build and run the Spark application:
 ```bash
 cd logs_consumer
 docker build -t spark_app .
 docker run --name=spark_container --network=kafka-spark-net spark_app
 ```
+> **Note**: "The Spark app is containerized using the `bitnami/spark` Docker image, which provides a single-node Spark environment with default configurations for all environment variables. All environment variables and their defaults are explained in the Apache Spark documentation [here](https://spark.apache.org/docs/latest/spark-standalone.html#cluster-launch-scripts)."
 
 **Verification**: Access the HDFS NameNode at `http://localhost:9870` and navigate to `/user/spark/log_stats` to verify parquet file generation.
 

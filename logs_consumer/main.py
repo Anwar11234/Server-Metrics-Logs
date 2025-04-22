@@ -30,14 +30,11 @@ def parse_log_data(raw_df):
         regexp_extract(col("value"), r" (\d+)$", 1).cast(LongType()).alias("file_size")
     ).withColumn("timestamp", to_timestamp("timestamp", "EEE, dd MMM yyyy HH:mm:ss z"))
 
-def add_response_type(parsed_df):
-    return parsed_df.withColumn(
-        "response_type",
-        when(col("response_status_code") == 200, "successful").otherwise("failed")   
-    )
-
 def calculate_stats(processed_df, window_duration = "5 minute", watermark_duration = "10 minute"):
     return processed_df \
+        .withColumn(
+            "response_type",
+            when(col("response_status_code") == 200, "successful").otherwise("failed")) \
         .withWatermark("timestamp", watermark_duration) \
         .groupby("request_method", "response_type", window("timestamp", window_duration)) \
         .count()
@@ -56,12 +53,11 @@ def main():
     kafka_df = read_kafka_stream(
         spark,
         bootstrap_servers="kafka1:19092,kafka2:29092,kafka3:39092",
-        topic="test-topic3"
+        topic="logs"
     )
     
     parsed_df = parse_log_data(kafka_df)
-    response_df = add_response_type(parsed_df)
-    stats_df = calculate_stats(response_df)
+    stats_df = calculate_stats(parsed_df)
     
     query = write_streaming_output(
         stats_df,

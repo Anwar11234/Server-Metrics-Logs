@@ -1,2 +1,4 @@
 .env
 __pycache__
+target
+pgadmin_data
