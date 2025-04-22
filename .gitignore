@@ -1,4 +1,4 @@
 .env
 __pycache__
-target
-pgadmin_data
+./pgadmin_data
+./java_program/target
